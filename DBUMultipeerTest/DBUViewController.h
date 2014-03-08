@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface DBUViewController : UIViewController
+@interface DBUViewController : UIViewController <UIActionSheetDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate>
 
 @end

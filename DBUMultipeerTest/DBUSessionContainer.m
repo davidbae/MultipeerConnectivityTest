@@ -8,9 +8,11 @@
 @import MultipeerConnectivity;
 
 #import "DBUSessionContainer.h"
+#import "DBUTranscript.h"
 
 #define LOGMESSAGE(__STR__) [self.delegate logMessage:__STR__];
 #define UPDATESTATUS        [self.delegate updateStatus:self.session browser:self.browser advertiser:self.advertiser];
+#define SERVICE_TYPE @"dbu_imgtran"
 
 @interface DBUSessionContainer()
 {
@@ -33,6 +35,21 @@
 
 @implementation DBUSessionContainer
 
+
+static DBUSessionContainer *sharedInstance = nil;
+// Get the shared instance and create it if necessary.
++ (DBUSessionContainer *)sharedInstance {
+    if (nil != sharedInstance) {
+        return sharedInstance;
+    }
+    
+    static dispatch_once_t pred;        // Lock
+    dispatch_once(&pred, ^{             // This code is called at most once per app
+        sharedInstance = [[DBUSessionContainer alloc] initWithDisplayName:[UIDevice currentDevice].name serviceType:SERVICE_TYPE];
+    });
+    
+    return sharedInstance;
+}
 
 - (id)initWithDisplayName:(NSString *)displayName serviceType:(NSString *)serviceType
 {
@@ -62,29 +79,36 @@
 }
 
 // Instance method for sending a string bassed text message to all remote peers
-- (NSData *)sendMessage:(NSString *)message
+- (DBUTranscript *)sendMessage:(NSString *)message
 {
     // Convert the string into a UTF8 encoded data
     NSData *messageData = [message dataUsingEncoding:NSUTF8StringEncoding];
     // Send text message to all connected peers
+    return [self sendData:messageData];
+}
+- (DBUTranscript *) sendData:(NSData *)data
+{
+    // Send data to all connected peers
     NSError *error;
-    [self.session sendData:messageData toPeers:self.session.connectedPeers withMode:MCSessionSendDataReliable error:&error];
+    [self.session sendData:data toPeers:self.session.connectedPeers withMode:MCSessionSendDataReliable error:&error];
     // Check the error return to know if there was an issue sending data to peers.  Note any peers in the 'toPeers' array argument are not connected this will fail.
     if (error) {
-        NSLog(@"Error sending message to peers [%@]", error);
-        [self.delegate receivedMessage:[NSString stringWithFormat:@"<<< Error: %@", error]];
+        //NSLog(@"Error sending message to peers [%@]", error);
+        [self.delegate logMessage:[NSString stringWithFormat:@"<<< Error: %@", error]];
         return nil;
     }
     else {
         // Create a new send transcript
-        NSLog(@"message sent: %@ to peer:%@", message, self.session.connectedPeers);
-        [self.delegate receivedMessage:[NSString stringWithFormat:@"<<< %@ sent to\n%@", message, self.session.connectedPeers]];
-        return messageData;
+        //NSLog(@"message sent: %@ to peer:%@", data, self.session.connectedPeers);
+        [self.delegate logMessage:[NSString stringWithFormat:@"<<< %@ sent to\n%@", data, self.session.connectedPeers]];
+        
+        DBUTranscript *transcript = [[DBUTranscript alloc] initWithPeerID:_session.myPeerID data:data direction:TRANSCRIPT_DIRECTION_SEND];
+        return transcript;
     }
 }
 
 // Method for sending image resources to all connected remote peers.  Returns an progress type transcript for monitoring tranfer
-- (NSData *)sendImage:(NSURL *)imageUrl
+- (DBUTranscript *)sendImage:(NSURL *)imageUrl
 {
     NSProgress *progress;
     // Loop on connected peers and send the image to each
@@ -101,14 +125,16 @@
                 // Create an image transcript for this received image resource
                 //Transcript *transcript = [[Transcript alloc] initWithPeerID:_session.myPeerID imageUrl:imageUrl direction:TRANSCRIPT_DIRECTION_SEND];
                 //[self.delegate updateTranscript:transcript];
+                DBUTranscript *transcript = [[DBUTranscript alloc] initWithPeerID:peerID imageUrl:imageUrl direction:TRANSCRIPT_DIRECTION_SEND];
+                [self.delegate updateTranscript:transcript];
             }
         }];
+        NSLog(@"sendImage to %@, %@", peerID.displayName, [imageUrl lastPathComponent]);
     }
     // Create an outgoing progress transcript.  For simplicity we will monitor a single NSProgress.  However users can measure each NSProgress returned individually as needed
     //Transcript *transcript = [[Transcript alloc] initWithPeerID:_session.myPeerID imageName:[imageUrl lastPathComponent] progress:progress direction:TRANSCRIPT_DIRECTION_SEND];
-    
-    //return transcript;
-    return nil;
+    DBUTranscript *transcript = [[DBUTranscript alloc] initWithPeerID:_session.myPeerID imageName:[imageUrl lastPathComponent] progress:progress direction:TRANSCRIPT_DIRECTION_SEND];
+    return transcript;
 }
 
 - (void) startSession
@@ -193,6 +219,8 @@
 - (void)stopBrowsingForPeers
 {
     if (_browser) {
+        [_foundPeersDictionary removeAllObjects];
+        [self.delegate updateFoundPeers:nil];
         [_browser stopBrowsingForPeers];
         [self.delegate logMessage:@"Browser stopBrowsingForPeers"];
     }else{
@@ -450,15 +478,20 @@
        fromPeer:(MCPeerID *)peerID
 {
     NSLog(@"didReceiveData: %@ from peerID:%@", [data description], peerID.displayName);
-    
+
     // Decode the incoming data to a UTF8 encoded string
-    NSString *receivedMessage = [[NSString alloc] initWithData:data encoding: NSUTF8StringEncoding];
-    [self.delegate receivedMessage:[NSString stringWithFormat:@">>>[%@]%@",peerID.displayName,receivedMessage]];
+    //NSString *receivedMessage = [[NSString alloc] initWithData:data encoding: NSUTF8StringEncoding];
+    //[self.delegate receivedMessage:[NSString stringWithFormat:@">>>[%@]%@",peerID.displayName,receivedMessage]];
     
+    DBUTranscript *transcript = [[DBUTranscript alloc] initWithPeerID:peerID data:data direction:TRANSCRIPT_DIRECTION_RECEIVE];
+    [self.delegate receivedTranscript:transcript];
+    
+    //데이터를 받았는데, 연결된 peer가 아닐 경우..
     NSArray *peers = _session.connectedPeers;
     if(![peers containsObject:peerID])
     {
-        [_session connectPeer:peerID withNearbyConnectionData:nil];
+        //연결해봐도 연결이 안됨.
+        //[_session connectPeer:peerID withNearbyConnectionData:nil];
     }
 }
 
@@ -467,6 +500,11 @@
    withProgress:(NSProgress *)progress
 {
     NSLog(@"didStartReceivingResourceWithName: %@ fromPeer:%@", resourceName, peerID.displayName);
+    //[self.delegate receivingResourceWithName:resourceName fromPeer:peerID withProgress:progress];
+    
+    DBUTranscript *transcript = [[DBUTranscript alloc] initWithPeerID:peerID imageName:resourceName progress:progress direction:TRANSCRIPT_DIRECTION_RECEIVE];
+    
+    [self.delegate receivedTranscript:transcript];
 }
 - (void)session:(MCSession *)session didReceiveStream:(NSInputStream *)stream
        withName:(NSString *)streamName
@@ -477,6 +515,27 @@
 - (void)session:(MCSession *)session didFinishReceivingResourceWithName:(NSString *)resourceName fromPeer:(MCPeerID *)peerID atURL:(NSURL *)localURL withError:(NSError *)error
 {
     NSLog(@"didFinishReceivingResourceWithName: %@, %@", resourceName, peerID.displayName);
+    //[self.delegate receivedResouceWithName:resourceName fromPeer:peerID atURL:localURL withError:error];
+    if (error) {
+        NSLog(@"Error [%@] receiving resource from peer %@ ", [error localizedDescription], peerID.displayName);
+    }else{
+        
+        // No error so this is a completed transfer.  The resources is located in a temporary location and should be copied to a permenant locatation immediately.
+        // Write to documents directory
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *copyPath = [NSString stringWithFormat:@"%@/%@", [paths objectAtIndex:0], resourceName];
+        if (![[NSFileManager defaultManager] copyItemAtPath:[localURL path] toPath:copyPath error:nil])
+        {
+            NSLog(@"Error copying resource to documents directory");
+        }
+        else {
+            // Get a URL for the path we just copied the resource to
+            NSURL *imageUrl = [NSURL fileURLWithPath:copyPath];
+            // Create an image transcript for this received image resource
+            DBUTranscript *transcript = [[DBUTranscript alloc] initWithPeerID:peerID imageUrl:imageUrl direction:TRANSCRIPT_DIRECTION_RECEIVE];
+            [self.delegate updateTranscript:transcript];
+        }
+    }
 }
 
 
