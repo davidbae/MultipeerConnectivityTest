@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+@class DBUTranscript;
 @protocol DBUSessionContainerDelegate;
 
 @interface DBUSessionContainer : NSObject <MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, UIAlertViewDelegate, MCNearbyServiceBrowserDelegate>
@@ -15,15 +16,19 @@
 @property (readonly, nonatomic) MCSession *session;
 @property (assign, nonatomic) id<DBUSessionContainerDelegate> delegate;
 
+
++ (DBUSessionContainer *)sharedInstance;
+
 // Designated initializer
 - (id)initWithDisplayName:(NSString *)displayName serviceType:(NSString *)serviceType;
 // Method for sending text messages to all connected remote peers.  Returna a message type transcript
 
 - (MCPeerID *)peerID;
 
-- (NSData *)sendMessage:(NSString *)message;
+- (DBUTranscript *)sendMessage:(NSString *)message;
+- (DBUTranscript *)sendData:(NSData *)data;
 // Method for sending image resources to all connected remote peers.  Returns an progress type transcript for monitoring tranfer
-- (NSData *)sendImage:(NSURL *)imageUrl;
+- (DBUTranscript *)sendImage:(NSURL *)imageUrl;
 
 - (void) startBrowser;
 - (void) stopBrowser;
@@ -51,9 +56,16 @@
 // Method used to signal to UI an image resource transfer (send or receive) has completed
 //- (void)updateTranscript:(Transcript *)transcript;
 
-- (void) receivedMessage:(NSString *)message;
+- (void) updateTranscript:(DBUTranscript *)transcript;
+- (void) receivedTranscript:(DBUTranscript *)transcript;
+
+//- (void) receivedMessage:(NSString *)message;
 - (void) logMessage:(NSString *)message;
 
 - (void) updateStatus:(MCSession *)session browser:(MCNearbyServiceBrowser*)browser advertiser:(MCNearbyServiceAdvertiser*)advertiser;
 - (void)updateFoundPeers:(NSArray *)peers;
+
+//- (void) receivingResourceWithName:(NSString *)resouceName fromPeer:(MCPeerID *)peerID withProgress:(NSProgress *)progress;
+//- (void) receivedResouceWithName:(NSString *)resourceName fromPeer:(MCPeerID *)peerID atURL:(NSURL *)localURL withError:(NSError *)error;
+
 @end

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		413F0DF0188AB8C1000DE039 /* DBUImageReceivingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 413F0DEF188AB8C1000DE039 /* DBUImageReceivingViewController.m */; };
+		413F0DF3188BEC64000DE039 /* DBUTranscript.m in Sources */ = {isa = PBXBuildFile; fileRef = 413F0DF2188BEC64000DE039 /* DBUTranscript.m */; };
 		419D219B187D2CE70036855E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 419D219A187D2CE70036855E /* Foundation.framework */; };
 		419D219D187D2CE70036855E /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 419D219C187D2CE70036855E /* CoreGraphics.framework */; };
 		419D219F187D2CE70036855E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 419D219E187D2CE70036855E /* UIKit.framework */; };
@@ -36,6 +38,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		413F0DEE188AB8C1000DE039 /* DBUImageReceivingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBUImageReceivingViewController.h; sourceTree = "<group>"; };
+		413F0DEF188AB8C1000DE039 /* DBUImageReceivingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBUImageReceivingViewController.m; sourceTree = "<group>"; };
+		413F0DF1188BEC64000DE039 /* DBUTranscript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DBUTranscript.h; sourceTree = "<group>"; };
+		413F0DF2188BEC64000DE039 /* DBUTranscript.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DBUTranscript.m; sourceTree = "<group>"; };
 		419D2197187D2CE70036855E /* DBUMultipeerTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DBUMultipeerTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		419D219A187D2CE70036855E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		419D219C187D2CE70036855E /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -123,9 +129,13 @@
 				419D21AF187D2CE70036855E /* Main_iPad.storyboard */,
 				419D21B2187D2CE70036855E /* DBUViewController.h */,
 				419D21B3187D2CE70036855E /* DBUViewController.m */,
+				413F0DEE188AB8C1000DE039 /* DBUImageReceivingViewController.h */,
+				413F0DEF188AB8C1000DE039 /* DBUImageReceivingViewController.m */,
 				419D21B5187D2CE70036855E /* Images.xcassets */,
 				41AF2E89187D9AF500BE0CB8 /* DBUSessionContainer.h */,
 				41AF2E8A187D9AF500BE0CB8 /* DBUSessionContainer.m */,
+				413F0DF1188BEC64000DE039 /* DBUTranscript.h */,
+				413F0DF2188BEC64000DE039 /* DBUTranscript.m */,
 				419D21A1187D2CE70036855E /* Supporting Files */,
 			);
 			path = DBUMultipeerTest;
@@ -261,6 +271,8 @@
 			files = (
 				419D21AB187D2CE70036855E /* DBUAppDelegate.m in Sources */,
 				41AF2E8B187D9AF500BE0CB8 /* DBUSessionContainer.m in Sources */,
+				413F0DF0188AB8C1000DE039 /* DBUImageReceivingViewController.m in Sources */,
+				413F0DF3188BEC64000DE039 /* DBUTranscript.m in Sources */,
 				419D21A7187D2CE70036855E /* main.m in Sources */,
 				419D21B4187D2CE70036855E /* DBUViewController.m in Sources */,
 			);
